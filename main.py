@@ -4,10 +4,39 @@ import pandas as pd
 
 DATABASE_LOCATION = "sqlite//:my_played_tracks.sqlite"
 USER_ID = "dav"
-TOKEN_ID = "BQDtCh7dehHemY9MUH4_CUq4XEzD124y116wtwQxKa31qfPT1lDsvHM2AicxMY0GnXhnlT1qWg20OKJw-2P8vdLfovHLhkUGzhuzbA06LzBuSMRfZ4f66u6-IH_dNF5_-ufRZ5RA2OwgbU6RtISyrVRqDBWTW_9u_fMLpzhJmdYl4yquYnZFgOfm5eTucBbKtO8Q4w"
+TOKEN_ID = "BQAu6vr8b6uGeBjBF5JJyg5MqKXvDkJGhSh6v8b8Rb7h_1LztNfrDuKh0F9utH4td6WReUh8lH6jAz6uof7h485Li5CclkHZ29UKq7sBbuoh-SViIqdTINI-CVjJGFAUfGMZF0RoTnzBTgoaCHTuVnAvMFogFeAR21V38FvHnzkEWmjEJBLZrZifcOBNPZlX0b_NZA"
+
+# Link to generate the TOKEN_ID: https://developer.spotify.com/console/get-recently-played
+
+def check_if_valid_data(df: pd.DataFrame) -> bool:
+    # Check if a Dataframe is empty.
+    if df.empty:
+        print("No songs recently played, Finishing the execution.")
+        return False
+
+    # Primary key check
+    if not pd.Series(df["played_at"]).is_unique:
+        raise Exception("Primary key check is violated")
+
+    # Check for nulls.
+    if df.isnull().values.any():
+        raise Exception("Null value found.")
+
+    # Check that all timestamps are of yestarday's date.
+    yesterday = datetime.datetime.now() - datetime.timedelta(days=1)
+    yesterday = yesterday.replace(hour=0 , minute=0, second=0, microsecond=0)
+
+    timestamps = df["timestamp"].tolist()
+    for timestamp in timestamps:
+        if datetime.datetime.strptime(timestamp, "%Y-%m-%d") != yesterday:
+            raise Exception("At least one of the returned songs doesn't come within the last 24 hours.")
+
+    return True
 
 
 if __name__ == "__main__":
+
+    #EXTRACT part of the ETL process.
 
     headers = {
         "Accept": "application/json",
@@ -45,4 +74,9 @@ if __name__ == "__main__":
     }
 
     song_df = pd.DataFrame(song_dict, columns=["song_name", "artists_name", "played_at", "timestamps"])
-    print(song_df)
+    
+    # VALIDATION(TRANSFORM) part of the ETL process
+    if check_if_valid_data(song_df):
+        print("Data valid, proceed to LOAD stage")
+    
+    # LOAD part of the ETL process.
