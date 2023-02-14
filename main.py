@@ -2,11 +2,13 @@ import datetime
 import requests
 import pandas as pd
 from database import Database
+import os
+from dotenv import load_dotenv
 
+load_dotenv()
 
-USER_ID = "dav"
-TOKEN_ID = "BQBWCfc2fS3qzt4kugHC68h9yD_4FyujCfqs_KQN5c5Fx43EEtq9cteV_DDw_l4sIhjXIXFae8TV3T8VU7zWu7oa4XMAIBbB-6J7qBR4lVsS4Swmxt6tg34HxAAw2skFtjgDKhc81Wb8QPu8kZrBVC8q8F4YTbseZKvjr0sernvxS_cOgnzU88hiEh04VBtT0JpI8Q"
-
+user_id = os.environ["USER_ID"]
+token_id = os.environ["TOKEN_ID"]
 # Link to generate the TOKEN_ID: https://developer.spotify.com/console/get-recently-played
 
 def check_if_valid_data(df: pd.DataFrame) -> bool:
@@ -44,7 +46,7 @@ if __name__ == "__main__":
     headers = {
         "Accept": "application/json",
         "Content-Type": "application/json",
-        "Authorization": f"Bearer {TOKEN_ID}"
+        "Authorization": f"Bearer {token_id}"
     }
 
     today = datetime.datetime.now()

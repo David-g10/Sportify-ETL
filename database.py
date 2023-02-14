@@ -1,11 +1,14 @@
 import sqlalchemy
-from sqlalchemy.orm import sessionmaker
+import os
 import sqlite3
+from dotenv import load_dotenv
 
-DATABASE_LOCATION = "sqlite:///my_played_tracks.sqlite"
+load_dotenv()
+
+db_location = os.environ["DATABASE_LOCATION"]
 
 class Database():
-    engine = sqlalchemy.create_engine(DATABASE_LOCATION)
+    engine = sqlalchemy.create_engine(db_location)
 
     def connect(self):
         
