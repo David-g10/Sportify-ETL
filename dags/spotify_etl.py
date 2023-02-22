@@ -1,12 +1,13 @@
 import datetime
 import requests
 import pandas as pd
-from database import Database
+from db.database import Database
 import os
 from dotenv import load_dotenv
 import base64
 import tekore as tk
 from flask import Flask, request, redirect, session
+import subprocess
 
 load_dotenv()
 
@@ -117,6 +118,11 @@ def load_to_db(song_df: pd.DataFrame):
 
     Database().close_connection(conn)
 
+def shutdown_server():
+    func = request.environ.get('werkzeug.server.shutdown')
+    if func is None:
+        raise RuntimeError('Not running with the Werkzeug Server')
+    func()
 
 conf = tk.config_from_environment()
 cred = tk.Credentials(*conf)
@@ -189,14 +195,20 @@ def app_factory() -> Flask:
         uid = session.pop('user', None)
         if uid is not None:
             users.pop(uid, None)
-        return redirect('/', 307)
+        return redirect('/shutdown', 307)
 
+    @app.route('/shutdown', methods=['POST'])
+    def shutdown():
+        shutdown_server()
+        return 'Server shutting down...'
     return app
 
-
-if __name__ == '__main__':
+def run_spotify_etl():
     application = app_factory()
     application.run('127.0.0.1', 5000)
+
+# if __name__ == '__main__':
+
 
 
     # Authorize
@@ -207,4 +219,8 @@ if __name__ == '__main__':
     #     "client_id" : client_id,
     #     "scope": "user-read-recently-played",
     #     "redirect_uri" : 'http://localhost:8888/callback'
-    # }   
+    # }
+    # 
+
+
+
