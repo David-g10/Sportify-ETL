@@ -118,11 +118,6 @@ def load_to_db(song_df: pd.DataFrame):
 
     Database().close_connection(conn)
 
-def shutdown_server():
-    func = request.environ.get('werkzeug.server.shutdown')
-    if func is None:
-        raise RuntimeError('Not running with the Werkzeug Server')
-    func()
 
 conf = tk.config_from_environment()
 cred = tk.Credentials(*conf)
@@ -134,6 +129,7 @@ users = {}  # User tokens: state -> token (use state as a user ID)
 in_link = '<a href="/login">login</a>'
 out_link = '<a href="/logout">logout</a>'
 login_msg = f'You can {in_link} or {out_link}'
+
 
 def app_factory() -> Flask:
     app = Flask(__name__)
@@ -195,17 +191,23 @@ def app_factory() -> Flask:
         uid = session.pop('user', None)
         if uid is not None:
             users.pop(uid, None)
-        return redirect('/shutdown', 307)
+        return redirect('/', 307)
 
-    @app.route('/shutdown', methods=['POST'])
-    def shutdown():
-        shutdown_server()
-        return 'Server shutting down...'
     return app
-
 def run_spotify_etl():
-    application = app_factory()
-    application.run('127.0.0.1', 5000)
+    try:
+        app = app_factory()
+        from multiprocessing import Process
+        import time
+        server = Process(target=app.run, args=('127.0.0.1', 5000))
+        server.start() # to start the server
+        time.sleep(60)
+        server.terminate() # to terminate the server
+    except Exception as e:
+        print(e)          
+    finally:
+        return "Succesfully task"
+
 
 # if __name__ == '__main__':
 
